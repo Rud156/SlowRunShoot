@@ -1,17 +1,21 @@
 import 'phaser';
 import { Types } from 'phaser';
+import MainScene from './scenes/MainScene';
+import GameConstants from './Utils/GameConstants';
 
 // main game configuration
 const config: Types.Core.GameConfig = {
-  width: 200,
-  height: 200,
   type: Phaser.AUTO,
+  width: GameConstants.Width,
+  height: GameConstants.Height,
   parent: 'game',
-  scene: [],
+  scene: [MainScene],
   physics: {
     default: 'arcade',
     arcade: {
-      gravity: { y: 0 },
+      gravity: { y: 300 },
+      debug: true,
+      debugStaticBodyColor: 0xff0000,
     },
   },
   input: {
@@ -19,7 +23,7 @@ const config: Types.Core.GameConfig = {
   },
 };
 
-// game class
+// Game Class
 export class Game extends Phaser.Game {
   constructor(config: Types.Core.GameConfig) {
     super(config);
