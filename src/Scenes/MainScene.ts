@@ -1,4 +1,4 @@
-import { Scene, Math, GameObjects } from 'phaser';
+import { Scene, Math, Types } from 'phaser';
 
 import GameConstants from '../Utils/GameConstants';
 import Player from '../GameObjects/Player/Player';
@@ -27,7 +27,8 @@ class MainScene extends Scene {
   }
 
   private createPlayer() {
-    this._player = new Player(new Math.Vector2(400, 300), new Math.Vector2(10, 50), 0xff0000, this);
+    this._player = new Player(new Math.Vector2(400, 300), new Math.Vector2(50, 50), 0xff0000, this);
+    this._player.setupInput(this.input);
   }
 
   private createGround() {
@@ -41,7 +42,9 @@ class MainScene extends Scene {
   }
 
   private setupColliders() {
-    this.physics.add.collider(this._player.getBody(), this._ground.getBody());
+    this.physics.add.collider(this._player.getBody(), this._ground.getBody(), () => {
+      this._player.onPlayerGrounded();
+    });
   }
 
   //#endregion
@@ -50,7 +53,8 @@ class MainScene extends Scene {
 
   update(time: number, delta: number) {
     const deltaTime = delta / 1000.0;
-    // this._player.update(deltaTime);
+
+    this._player.update(deltaTime);
   }
 
   //#endregion

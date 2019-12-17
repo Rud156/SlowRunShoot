@@ -1,4 +1,4 @@
-import { Math, Geom, GameObjects, Scene, Physics } from 'phaser';
+import { Math, Geom, Scene, Physics } from 'phaser';
 import AssetDatabase from '../../Utils/AssetDatabase';
 
 class StaticBlocks {
@@ -27,7 +27,7 @@ class StaticBlocks {
     this._body = scene.physics.add.staticSprite(this._position.x, this._position.y, AssetDatabase.WhitePixelString);
     this._body.setSize(this._shape.width, this._shape.height);
     this._body.setDisplaySize(this._shape.width, this._shape.height);
-    this._body.setTint(0x00ff00);
+    this._body.setTint(this._color);
   }
 
   //#endregion
