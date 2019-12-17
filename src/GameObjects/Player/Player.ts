@@ -1,4 +1,4 @@
-import { Math, Geom, Scene, Physics, Input } from 'phaser';
+import { Math as Maths, Geom, Scene, Physics, Input } from 'phaser';
 import AssetDatabase from '../../Utils/AssetDatabase';
 import { PlayerController, PlayerDirection } from './PlayerController';
 import PlayerCollision from './PlayerCollision';
@@ -16,7 +16,7 @@ class Player {
   private MovementSpeedDecrementRate = 500;
 
   private _color: number;
-  private _position: Math.Vector2;
+  private _position: Maths.Vector2;
 
   private _shape: Geom.Rectangle;
   private _body: Physics.Arcade.Sprite;
@@ -27,7 +27,7 @@ class Player {
 
   //#region Construction
 
-  constructor(position: Math.Vector2, size: Math.Vector2, color: number, scene: Scene) {
+  constructor(position: Maths.Vector2, size: Maths.Vector2, color: number, scene: Scene) {
     this._color = color;
     this._position = position;
 
@@ -78,6 +78,8 @@ class Player {
 
     if (this._body.body.velocity.y > 0) {
       this._playerSquisher.playerFalling(this._body.body.velocity.y, this.MaxFallVelocity, deltaTime);
+    } else if (Math.abs(this._body.body.velocity.x) > 0) {
+      this._playerSquisher.playerMoving(Math.abs(this._body.body.velocity.x), this.MaxMovementSpeed, deltaTime);
     }
 
     switch (playerDirection) {

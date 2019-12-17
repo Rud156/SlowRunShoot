@@ -87,12 +87,22 @@ class PlayerSquisher {
   }
 
   public playerFalling(currentFallVelocity: number, maxFallVelocity: number, deltaTime: number) {
-    const x = ExtensionFunctions.map(currentFallVelocity, 0, maxFallVelocity, 1, this.PlayerMinXScale);
-    const y = ExtensionFunctions.map(currentFallVelocity, 0, maxFallVelocity, 1, this.PlayerMaxYScale);
+    const xScale = ExtensionFunctions.map(currentFallVelocity, 0, maxFallVelocity, 1, this.PlayerMinXScale);
+    const yScale = ExtensionFunctions.map(currentFallVelocity, 0, maxFallVelocity, 1, this.PlayerMaxYScale);
 
     if (this._morphCompleted) {
-      this._playerScale.x = Math.Linear(this._playerScale.x, x, this.PlayerFallScaleChange * deltaTime);
-      this._playerScale.y = Math.Linear(this._playerScale.y, y, this.PlayerFallScaleChange * deltaTime);
+      this._playerScale.x = Math.Linear(this._playerScale.x, xScale, this.PlayerFallScaleChange * deltaTime);
+      this._playerScale.y = Math.Linear(this._playerScale.y, yScale, this.PlayerFallScaleChange * deltaTime);
+    }
+  }
+
+  public playerMoving(currentMovementVelocity: number, maxMovementVelocity: number, deltaTime: number) {
+    const xScale = ExtensionFunctions.map(currentMovementVelocity, 100, maxMovementVelocity, 1, this.PlayerMaxXScale);
+    const yScale = ExtensionFunctions.map(currentMovementVelocity, 100, maxMovementVelocity, 1, this.PlayerMinYScale);
+
+    if (this._morphCompleted) {
+      this._playerScale.x = Math.Linear(this._playerScale.x, xScale, this.PlayerFallScaleChange * deltaTime);
+      this._playerScale.y = Math.Linear(this._playerScale.y, yScale, this.PlayerFallScaleChange * deltaTime);
     }
   }
 
