@@ -1,4 +1,4 @@
-import { Scene, Math, Types } from 'phaser';
+import { Scene, Math as Maths, GameObjects } from 'phaser';
 
 import GameConstants from '../Utils/GameConstants';
 import Player from '../GameObjects/Player/Player';
@@ -9,6 +9,8 @@ class MainScene extends Scene {
   private _player: Player;
   private _ground: StaticBlocks;
 
+  private _cursor: GameObjects.Sprite;
+
   //#region Construction
 
   constructor() {
@@ -17,6 +19,7 @@ class MainScene extends Scene {
 
   preload() {
     this.load.image(AssetDatabase.WhitePixelString, AssetDatabase.WhitePixel);
+    this.load.image(AssetDatabase.BlueCursorString, AssetDatabase.BlueCursor);
   }
 
   create() {
@@ -24,18 +27,19 @@ class MainScene extends Scene {
     this.createGround();
 
     this.setupColliders();
+    this.setupOtherSceneItems();
   }
 
   private createPlayer() {
-    this._player = new Player(new Math.Vector2(400, 300), new Math.Vector2(50, 50), 0xff0000, this);
+    this._player = new Player(new Maths.Vector2(400, 300), new Maths.Vector2(50, 50), 0xff0000, this);
     this._player.setupInput(this.input);
   }
 
   private createGround() {
     const groundHeight = 20;
     this._ground = new StaticBlocks(
-      new Math.Vector2(GameConstants.Width / 2, GameConstants.Height - groundHeight / 2),
-      new Math.Vector2(GameConstants.Width, groundHeight),
+      new Maths.Vector2(GameConstants.Width / 2, GameConstants.Height - groundHeight / 2),
+      new Maths.Vector2(GameConstants.Width, groundHeight),
       0x00ff00,
       this
     );
@@ -47,6 +51,18 @@ class MainScene extends Scene {
     });
   }
 
+  private setupOtherSceneItems() {
+    this._cursor = this.add.sprite(0, 0, AssetDatabase.BlueCursorString);
+
+    this.input.on('pointermove', pointer => {
+      this.updateCursorPosition(pointer);
+    });
+
+    this.input.on('pointerup', pointer => {
+      this.handleMouseClick(pointer);
+    });
+  }
+
   //#endregion
 
   //#region Update
@@ -55,6 +71,18 @@ class MainScene extends Scene {
     const deltaTime = delta / 1000.0;
 
     this._player.update(deltaTime);
+  }
+
+  //#endregion
+
+  //#region Utility Functions
+
+  private updateCursorPosition(pointer: Maths.Vector2) {
+    this._cursor.setPosition(pointer.x, pointer.y);
+  }
+
+  private handleMouseClick(pointer: Maths.Vector2) {
+    this._player.shoot(pointer);
   }
 
   //#endregion

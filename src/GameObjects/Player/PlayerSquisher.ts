@@ -3,15 +3,15 @@ import ExtensionFunctions from '../../Utils/ExtensionFunctions';
 
 class PlayerSquisher {
   // Squisher Scales
-  private PlayerMinXScale = 0.8;
-  private PlayerMaxXScale = 1.2;
-  private PlayerMinYScale = 0.8;
-  private PlayerMaxYScale = 1.2;
+  private static readonly PlayerMinXScale = 0.8;
+  private static readonly PlayerMaxXScale = 1.2;
+  private static readonly PlayerMinYScale = 0.8;
+  private static readonly PlayerMaxYScale = 1.2;
 
   // Scale Change Rate
-  private PlayerJumpScaleChange = 1.5;
-  private PlayerLandScaleChange = 7;
-  private PlayerFallScaleChange = 7;
+  private static readonly PlayerJumpScaleChange = 1.5;
+  private static readonly PlayerLandScaleChange = 7;
+  private static readonly PlayerFallScaleChange = 7;
 
   private _playerTargetScale: Math.Vector2;
   private _lerpAmount: number;
@@ -67,42 +67,42 @@ class PlayerSquisher {
   //#region External Functions
 
   public playerJumped() {
-    this._playerTargetScale.x = this.PlayerMinXScale;
-    this._playerTargetScale.y = this.PlayerMaxYScale;
+    this._playerTargetScale.x = PlayerSquisher.PlayerMinXScale;
+    this._playerTargetScale.y = PlayerSquisher.PlayerMaxYScale;
 
     this._morphCompleted = false;
     this._morphToTarget = true;
     this._lerpAmount = 0;
-    this._scaleChangeRate = this.PlayerJumpScaleChange;
+    this._scaleChangeRate = PlayerSquisher.PlayerJumpScaleChange;
   }
 
   public playerLanded() {
-    this._playerTargetScale.x = this.PlayerMaxXScale;
-    this._playerTargetScale.y = this.PlayerMinYScale;
+    this._playerTargetScale.x = PlayerSquisher.PlayerMaxXScale;
+    this._playerTargetScale.y = PlayerSquisher.PlayerMinYScale;
 
     this._morphCompleted = false;
     this._morphToTarget = true;
     this._lerpAmount = 0;
-    this._scaleChangeRate = this.PlayerLandScaleChange;
+    this._scaleChangeRate = PlayerSquisher.PlayerLandScaleChange;
   }
 
   public playerFalling(currentFallVelocity: number, maxFallVelocity: number, deltaTime: number) {
-    const xScale = ExtensionFunctions.map(currentFallVelocity, 0, maxFallVelocity, 1, this.PlayerMinXScale);
-    const yScale = ExtensionFunctions.map(currentFallVelocity, 0, maxFallVelocity, 1, this.PlayerMaxYScale);
+    const xScale = ExtensionFunctions.map(currentFallVelocity, 0, maxFallVelocity, 1, PlayerSquisher.PlayerMinXScale);
+    const yScale = ExtensionFunctions.map(currentFallVelocity, 0, maxFallVelocity, 1, PlayerSquisher.PlayerMaxYScale);
 
     if (this._morphCompleted) {
-      this._playerScale.x = Math.Linear(this._playerScale.x, xScale, this.PlayerFallScaleChange * deltaTime);
-      this._playerScale.y = Math.Linear(this._playerScale.y, yScale, this.PlayerFallScaleChange * deltaTime);
+      this._playerScale.x = Math.Linear(this._playerScale.x, xScale, PlayerSquisher.PlayerFallScaleChange * deltaTime);
+      this._playerScale.y = Math.Linear(this._playerScale.y, yScale, PlayerSquisher.PlayerFallScaleChange * deltaTime);
     }
   }
 
   public playerMoving(currentMovementVelocity: number, maxMovementVelocity: number, deltaTime: number) {
-    const xScale = ExtensionFunctions.map(currentMovementVelocity, 100, maxMovementVelocity, 1, this.PlayerMaxXScale);
-    const yScale = ExtensionFunctions.map(currentMovementVelocity, 100, maxMovementVelocity, 1, this.PlayerMinYScale);
+    const xScale = ExtensionFunctions.map(currentMovementVelocity, 100, maxMovementVelocity, 1, PlayerSquisher.PlayerMaxXScale);
+    const yScale = ExtensionFunctions.map(currentMovementVelocity, 100, maxMovementVelocity, 1, PlayerSquisher.PlayerMinYScale);
 
     if (this._morphCompleted) {
-      this._playerScale.x = Math.Linear(this._playerScale.x, xScale, this.PlayerFallScaleChange * deltaTime);
-      this._playerScale.y = Math.Linear(this._playerScale.y, yScale, this.PlayerFallScaleChange * deltaTime);
+      this._playerScale.x = Math.Linear(this._playerScale.x, xScale, PlayerSquisher.PlayerFallScaleChange * deltaTime);
+      this._playerScale.y = Math.Linear(this._playerScale.y, yScale, PlayerSquisher.PlayerFallScaleChange * deltaTime);
     }
   }
 

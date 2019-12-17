@@ -3,22 +3,26 @@ import AssetDatabase from '../../Utils/AssetDatabase';
 import { PlayerController, PlayerDirection } from './PlayerController';
 import PlayerCollision from './PlayerCollision';
 import PlayerSquisher from './PlayerSquisher';
+import Projectile from '../Projectiles/Projectile';
+import GameConstants from '../../Utils/GameConstants';
 
 class Player {
   // Jump and Fall Data
-  private JumpVelocity = -200;
-  private MaxFallVelocity = 300;
-  private FallMultiplier = 21;
+  private static readonly JumpVelocity = -200;
+  private static readonly MaxFallVelocity = 300;
+  private static readonly FallMultiplier = 21;
 
   // Movement Data
-  private MaxMovementSpeed = 230;
-  private MovementSpeedIncrementRate = 400;
-  private MovementSpeedDecrementRate = 500;
+  private static readonly MaxMovementSpeed = 230;
+  private static readonly MovementSpeedIncrementRate = 400;
+  private static readonly MovementSpeedDecrementRate = 500;
+
+  // Projectiles
+  private _projectiles: Array<Projectile>;
+
+  private _scene: Scene;
 
   private _color: number;
-  private _position: Maths.Vector2;
-
-  private _shape: Geom.Rectangle;
   private _body: Physics.Arcade.Sprite;
 
   private _playerController: PlayerController;
@@ -29,29 +33,25 @@ class Player {
 
   constructor(position: Maths.Vector2, size: Maths.Vector2, color: number, scene: Scene) {
     this._color = color;
-    this._position = position;
+    this._scene = scene;
 
-    this._shape = new Geom.Rectangle();
-    this._shape.width = size.x;
-    this._shape.height = size.y;
-    this._shape.x = position.x - size.x / 2;
-    this._shape.y = position.y - size.y / 2;
+    this._projectiles = [];
 
-    this.createPlayerBody(scene);
+    this.createPlayerBody(scene, position, size);
   }
 
   public setupInput(input: Input.InputPlugin) {
     this._playerController = new PlayerController(input);
   }
 
-  private createPlayerBody(scene: Scene) {
-    this._body = scene.physics.add.sprite(this._position.x, this._position.y, AssetDatabase.WhitePixelString);
+  private createPlayerBody(scene: Scene, position: Maths.Vector2, size: Maths.Vector2) {
+    this._body = scene.physics.add.sprite(position.x, position.y, AssetDatabase.WhitePixelString);
     this._body.setCollideWorldBounds(true);
     this._body.setBounce(0.3);
-    this._body.setMaxVelocity(this.MaxMovementSpeed, this.MaxFallVelocity);
-    this._body.setDragX(this.MovementSpeedDecrementRate);
+    this._body.setMaxVelocity(Player.MaxMovementSpeed, Player.MaxFallVelocity);
+    this._body.setDragX(Player.MovementSpeedDecrementRate);
 
-    this._body.setDisplaySize(this._shape.width, this._shape.height);
+    this._body.setDisplaySize(size.x, size.y);
     this._body.setTint(this._color);
 
     this._playerCollision = new PlayerCollision();
@@ -64,10 +64,6 @@ class Player {
   //#region Update
 
   public update(deltaTime: number) {
-    const position = this._body.body.center;
-    this._shape.x = position.x - this._shape.width / 2;
-    this._shape.y = position.y - this._shape.height / 2;
-
     this._playerController.update();
     const playerDirection = this._playerController.PlayerDirection;
     const jumped = this._playerController.PlayerJumped;
@@ -77,9 +73,9 @@ class Player {
     this._body.setScale(playerScale.x, playerScale.y);
 
     if (this._body.body.velocity.y > 0) {
-      this._playerSquisher.playerFalling(this._body.body.velocity.y, this.MaxFallVelocity, deltaTime);
+      this._playerSquisher.playerFalling(this._body.body.velocity.y, Player.MaxFallVelocity, deltaTime);
     } else if (Math.abs(this._body.body.velocity.x) > 0) {
-      this._playerSquisher.playerMoving(Math.abs(this._body.body.velocity.x), this.MaxMovementSpeed, deltaTime);
+      this._playerSquisher.playerMoving(Math.abs(this._body.body.velocity.x), Player.MaxMovementSpeed, deltaTime);
     }
 
     switch (playerDirection) {
@@ -91,13 +87,13 @@ class Player {
 
       case PlayerDirection.Left:
         {
-          this._body.setAccelerationX(-this.MovementSpeedIncrementRate);
+          this._body.setAccelerationX(-Player.MovementSpeedIncrementRate);
         }
         break;
 
       case PlayerDirection.Right:
         {
-          this._body.setAccelerationX(this.MovementSpeedIncrementRate);
+          this._body.setAccelerationX(Player.MovementSpeedIncrementRate);
         }
         break;
 
@@ -106,9 +102,12 @@ class Player {
     }
 
     if (jumped) {
-      this._body.setVelocityY(this.JumpVelocity);
+      this._body.setVelocityY(Player.JumpVelocity);
       this._playerCollision.onPlayerJumped();
     }
+
+    this.updateBetterJump();
+    this.updateProjectiles(deltaTime);
   }
 
   //#endregion
@@ -117,6 +116,21 @@ class Player {
 
   public onPlayerGrounded() {
     this._playerCollision.onGroundCollision();
+  }
+
+  public shoot(pointer: Maths.Vector2) {
+    const position = this._body.body.position;
+    position.x += this._body.width / 2;
+    position.y += this._body.height / 2;
+
+    const pointerVector = new Maths.Vector2(pointer.x, pointer.y);
+    const directionVector = pointerVector.subtract(position);
+    directionVector.normalize();
+
+    const projectile = new Projectile(position.x, position.y, 0xf0f0f0, true, this._scene);
+    projectile.launchProjectile(directionVector);
+
+    this._projectiles.push(projectile);
   }
 
   public getBody() {
@@ -129,7 +143,20 @@ class Player {
 
   private updateBetterJump() {
     if (this._body.body.velocity.y < 0) {
-      this._body.setAccelerationY(this.FallMultiplier);
+      this._body.setAccelerationY(Player.FallMultiplier);
+    }
+  }
+
+  private updateProjectiles(deltaTime: number) {
+    this._projectiles.forEach(projectile => {
+      projectile.update(deltaTime);
+    });
+
+    for (let i = this._projectiles.length - 1; i >= 0; i--) {
+      if (this._projectiles[i].CurrentLifetime <= 0) {
+        this._projectiles[i].destroy();
+        this._projectiles.splice(i, 1);
+      }
     }
   }
 
