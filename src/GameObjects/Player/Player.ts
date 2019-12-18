@@ -4,7 +4,8 @@ import { PlayerController, PlayerDirection } from './PlayerController';
 import PlayerCollision from './PlayerCollision';
 import PlayerSquisher from './PlayerSquisher';
 import Projectile from '../Projectiles/Projectile';
-import GameConstants from '../../Utils/GameConstants';
+import MainScene from '../../scenes/MainScene';
+import { ParticleType } from '../../Managers/MainSceneParticlesManager';
 
 class Player {
   // Jump and Fall Data
@@ -54,7 +55,7 @@ class Player {
     this._body.setDisplaySize(size.x, size.y);
     this._body.setTint(this._color);
 
-    this._playerCollision = new PlayerCollision();
+    this._playerCollision = new PlayerCollision(this);
     this._playerSquisher = new PlayerSquisher();
     this._playerCollision.setPlayerSquisher(this._playerSquisher);
   }
@@ -114,20 +115,30 @@ class Player {
 
   //#region External Functions
 
+  public playLandEffect() {
+    const mainScene = this._scene as MainScene;
+
+    const position = this._body.body.position;
+    const xPosition = position.x + this._body.width / 2;
+    const yPosition = position.y + this._body.height;
+
+    mainScene.playParticleEffect(ParticleType.LandDust, 0.1, xPosition, yPosition);
+  }
+
   public onPlayerGrounded() {
     this._playerCollision.onGroundCollision();
   }
 
   public shoot(pointer: Maths.Vector2) {
     const position = this._body.body.position;
-    position.x += this._body.width / 2;
-    position.y += this._body.height / 2;
+    const xPosition = position.x + this._body.width / 2;
+    const yPosition = position.y + this._body.height / 2;
 
     const pointerVector = new Maths.Vector2(pointer.x, pointer.y);
-    const directionVector = pointerVector.subtract(position);
+    const directionVector = pointerVector.subtract(new Maths.Vector2(xPosition, yPosition));
     directionVector.normalize();
 
-    const projectile = new Projectile(position.x, position.y, 0xf0f0f0, true, this._scene);
+    const projectile = new Projectile(xPosition, yPosition, 0xf0f0f0, true, this._scene);
     projectile.launchProjectile(directionVector);
 
     this._projectiles.push(projectile);

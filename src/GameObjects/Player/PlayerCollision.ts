@@ -1,13 +1,17 @@
 import PlayerSquisher from './PlayerSquisher';
+import Player from './Player';
 
 class PlayerCollision {
   private _isGrounded: boolean;
   private _playerSquisher: PlayerSquisher;
 
+  private _playerParent: Player;
+
   //#region Construction
 
-  constructor() {
+  constructor(playerParent: Player) {
     this._isGrounded = false;
+    this._playerParent = playerParent;
   }
 
   //#endregion
@@ -25,6 +29,7 @@ class PlayerCollision {
 
     this._isGrounded = true;
     this._playerSquisher.playerLanded();
+    this._playerParent.playLandEffect();
   }
 
   public onPlayerJumped() {

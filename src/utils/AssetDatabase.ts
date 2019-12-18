@@ -11,6 +11,7 @@ export default {
 
   //#region Particles
 
+  ShapesString: 'shapes',
   ShapesJson: './src/Assets/ParticleEffects/shapes.json',
   ShapesPng: './src/Assets/ParticleEffects/shapes.png',
   DashString: 'Dash',

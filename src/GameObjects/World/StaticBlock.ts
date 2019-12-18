@@ -1,7 +1,7 @@
 import { Math, Geom, Scene, Physics } from 'phaser';
 import AssetDatabase from '../../Utils/AssetDatabase';
 
-class StaticBlocks {
+class StaticBlock {
   private _color: number;
   private _position: Math.Vector2;
 
@@ -41,4 +41,4 @@ class StaticBlocks {
   //#endregion
 }
 
-export default StaticBlocks;
+export default StaticBlock;
