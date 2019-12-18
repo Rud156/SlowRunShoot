@@ -18,6 +18,14 @@ class MainScene extends Scene {
   }
 
   preload() {
+    // Load Particles
+    this.load.atlas('shapes', AssetDatabase.ShapesPng, AssetDatabase.ShapesJson);
+    this.load.text(AssetDatabase.DashString, AssetDatabase.Dash);
+    this.load.text(AssetDatabase.LandDustString, AssetDatabase.LandDust);
+    this.load.text(AssetDatabase.StarSpiralString, AssetDatabase.StarSpiral);
+    this.load.text(AssetDatabase.BulletTrailString, AssetDatabase.BulletTrail);
+
+    // Load Images
     this.load.image(AssetDatabase.WhitePixelString, AssetDatabase.WhitePixel);
     this.load.image(AssetDatabase.BlueCursorString, AssetDatabase.BlueCursor);
   }
