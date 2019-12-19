@@ -76,6 +76,7 @@ class PlayerSquisher {
   }
 
   public playerForceSquishComplete() {
+    this._scaleChangeRate = PlayerSquisher.PlayerLandScaleChange;
     this._morphCompleted = false;
     this._morphToTarget = false;
     this._lerpAmount = 0;

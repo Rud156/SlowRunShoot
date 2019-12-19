@@ -90,20 +90,9 @@ class Projectile {
     if (this._currentTrailLifeTime <= 0) {
       const mainScene = this._scene as MainScene;
 
-      const position = this._body.body.position;
-
-      let xOffset =
-        (Math.sin(this._rotation) * this._body.displayWidth) / 2 +
-        (Math.cos(this._rotation) * this._body.displayHeight) / 2;
-      let yOffset =
-        (Math.sin(this._rotation) * this._body.displayHeight) / 2 +
-        (Math.cos(this._rotation) * this._body.displayWidth) / 2;
-
-      xOffset = -Math.abs(xOffset);
-      yOffset = -Math.abs(yOffset);
-
-      const xPosition = position.x - xOffset;
-      const yPosition = position.y - yOffset;
+      const position = this._body.getCenter();
+      const xPosition = position.x;
+      const yPosition = position.y;
 
       mainScene.playParticleEffect(ParticleType.BulletTrail, 0.1, xPosition, yPosition);
 

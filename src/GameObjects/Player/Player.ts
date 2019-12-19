@@ -23,6 +23,7 @@ class Player {
   private static readonly PlayerTimeBetweenShot = 0.3;
   private static readonly PlayerDashVelocity = 500;
   private static readonly PlayerDashControlTime = 0.3;
+  private static readonly PlayerDashEffectTime = 0.03;
 
   // Projectiles
   private _projectiles: Array<Projectile>;
@@ -37,8 +38,10 @@ class Player {
   private _playerSquisher: PlayerSquisher;
 
   private _playerCriticalMovementState: PlayerCriticalMovementState;
-  private _lastShotTime: number;
   private _playerUnControlTime: number;
+
+  private _lastShotTime: number;
+  private _playerDashEffectTime: number;
 
   //#region Construction
 
@@ -50,6 +53,7 @@ class Player {
     this._playerUnControlTime = 0;
     this._playerCriticalMovementState = PlayerCriticalMovementState.None;
     this._lastShotTime = 0;
+    this._playerDashEffectTime = 0;
 
     this.createPlayerBody(scene, position, size);
   }
@@ -103,6 +107,7 @@ class Player {
 
     this.checkAndActivatePlayerDash();
     this.updatePlayerShooting(deltaTime);
+    this.updateDashEffect(deltaTime);
 
     this.updatePlayerUnControlTime(deltaTime);
 
@@ -234,7 +239,26 @@ class Player {
     this._body.setVelocity(xVelocity, yVelocity);
 
     this._playerUnControlTime = Player.PlayerDashControlTime;
+    this._playerCriticalMovementState = PlayerCriticalMovementState.Dash;
     this._scene.cameras.main.shake(100, 0.01);
+
+    const mainScene = this._scene as MainScene;
+    const position = this._body.getCenter();
+    mainScene.playParticleEffect(ParticleType.StarSpiral, 0.3, position.x, position.y);
+  }
+
+  private updateDashEffect(deltaTime: number) {
+    if (this._playerCriticalMovementState === PlayerCriticalMovementState.Dash) {
+      this._playerDashEffectTime -= deltaTime;
+
+      if (this._playerDashEffectTime <= 0) {
+        this._playerDashEffectTime = Player.PlayerDashEffectTime;
+
+        const mainScene = this._scene as MainScene;
+        const position = this._body.getCenter();
+        mainScene.playParticleEffect(ParticleType.Dash, 0.1, position.x, position.y);
+      }
+    }
   }
 
   private updateBetterJump() {

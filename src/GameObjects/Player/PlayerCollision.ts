@@ -26,8 +26,8 @@ class PlayerCollision {
   private createCollider(scene: Scene) {
     this._playerCollider = scene.physics.add.sprite(0, 0, AssetDatabase.WhitePixelString);
     this._playerCollider.setVisible(false);
-    this._playerCollider.setSize(PlayerCollision.ColliderSize, PlayerCollision.ColliderSize);
-    this._playerCollider.setDisplaySize(PlayerCollision.ColliderSize, PlayerCollision.ColliderSize);
+    this._playerCollider.setSize(PlayerCollision.ColliderSize, PlayerCollision.ColliderSize * 1.5);
+    this._playerCollider.setDisplaySize(PlayerCollision.ColliderSize, PlayerCollision.ColliderSize * 1.5);
 
     this._playerSelfCollider = scene.physics.add.sprite(0, 0, AssetDatabase.WhitePixelString);
     this._playerSelfCollider.setVisible(false);
