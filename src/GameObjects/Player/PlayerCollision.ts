@@ -75,7 +75,6 @@ class PlayerCollision {
   }
 
   public onGroundCollision() {
-    console.log('On Ground Update');
     this._prevIsGrounded = true;
   }
 
