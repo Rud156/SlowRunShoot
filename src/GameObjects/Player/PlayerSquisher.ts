@@ -66,6 +66,8 @@ class PlayerSquisher {
 
   //#region External Functions
 
+  public playerShot(rotation: number) {}
+
   public playerJumped() {
     this._playerTargetScale.x = PlayerSquisher.PlayerMinXScale;
     this._playerTargetScale.y = PlayerSquisher.PlayerMaxYScale;
@@ -97,8 +99,20 @@ class PlayerSquisher {
   }
 
   public playerMoving(currentMovementVelocity: number, maxMovementVelocity: number, deltaTime: number) {
-    const xScale = ExtensionFunctions.map(currentMovementVelocity, 100, maxMovementVelocity, 1, PlayerSquisher.PlayerMaxXScale);
-    const yScale = ExtensionFunctions.map(currentMovementVelocity, 100, maxMovementVelocity, 1, PlayerSquisher.PlayerMinYScale);
+    const xScale = ExtensionFunctions.map(
+      currentMovementVelocity,
+      100,
+      maxMovementVelocity,
+      1,
+      PlayerSquisher.PlayerMaxXScale
+    );
+    const yScale = ExtensionFunctions.map(
+      currentMovementVelocity,
+      100,
+      maxMovementVelocity,
+      1,
+      PlayerSquisher.PlayerMinYScale
+    );
 
     if (this._morphCompleted) {
       this._playerScale.x = Math.Linear(this._playerScale.x, xScale, PlayerSquisher.PlayerFallScaleChange * deltaTime);

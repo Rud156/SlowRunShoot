@@ -94,8 +94,24 @@ class MainScene extends Scene {
   //#region External Functions
 
   public playParticleEffect(effectType: ParticleType, lifeTime: number, xPosition: number, yPosition: number) {
-    this.cameras.main.flash();
-    this.cameras.main.shake(200, 0.01);
+    // Only for special effects
+    switch (effectType) {
+      case ParticleType.BulletTrail:
+        break;
+
+      case ParticleType.Dash:
+        break;
+
+      case ParticleType.LandDust:
+        {
+          this.cameras.main.flash();
+          this.cameras.main.shake(200, 0.01);
+        }
+        break;
+
+      case ParticleType.StarSpiral:
+        break;
+    }
 
     this._particleManager.playEffectAtPosition(effectType, lifeTime, xPosition, yPosition);
   }

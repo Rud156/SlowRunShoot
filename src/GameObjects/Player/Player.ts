@@ -17,6 +17,8 @@ class Player {
   private static readonly MaxMovementSpeed = 230;
   private static readonly MovementSpeedIncrementRate = 400;
   private static readonly MovementSpeedDecrementRate = 500;
+  private static readonly PlayerRecoilForce = 1000;
+  private static readonly PlayerRecoilControlTime = 0.3;
 
   // Projectiles
   private _projectiles: Array<Projectile>;
@@ -30,6 +32,8 @@ class Player {
   private _playerCollision: PlayerCollision;
   private _playerSquisher: PlayerSquisher;
 
+  private _playerRecoilTime: number;
+
   //#region Construction
 
   constructor(position: Maths.Vector2, size: Maths.Vector2, color: number, scene: Scene) {
@@ -37,6 +41,7 @@ class Player {
     this._scene = scene;
 
     this._projectiles = [];
+    this._playerRecoilTime = 0;
 
     this.createPlayerBody(scene, position, size);
   }
@@ -66,7 +71,6 @@ class Player {
 
   public update(deltaTime: number) {
     this._playerController.update();
-    const playerDirection = this._playerController.PlayerDirection;
     const jumped = this._playerController.PlayerJumped;
 
     this._playerSquisher.update(deltaTime);
@@ -78,6 +82,73 @@ class Player {
     } else if (Math.abs(this._body.body.velocity.x) > 0) {
       this._playerSquisher.playerMoving(Math.abs(this._body.body.velocity.x), Player.MaxMovementSpeed, deltaTime);
     }
+
+    if (jumped) {
+      this._body.setVelocityY(Player.JumpVelocity);
+      this._playerCollision.onPlayerJumped();
+    }
+
+    this.updatePlayerMovement(deltaTime);
+    this.updateBetterJump();
+    this.updateProjectiles(deltaTime);
+  }
+
+  //#endregion
+
+  //#region External Functions
+
+  public playLandEffect() {
+    const mainScene = this._scene as MainScene;
+
+    const position = this._body.body.position;
+    const xPosition = position.x + this._body.displayWidth / 2;
+    const yPosition = position.y + this._body.displayHeight;
+
+    mainScene.playParticleEffect(ParticleType.LandDust, 0.1, xPosition, yPosition);
+  }
+
+  public onPlayerGrounded() {
+    this._playerCollision.onGroundCollision();
+  }
+
+  public shoot(pointer: Maths.Vector2) {
+    const position = this._body.body.position;
+    const xPosition = position.x + this._body.displayWidth / 2;
+    const yPosition = position.y + this._body.displayHeight / 2;
+
+    const pointerVector = new Maths.Vector2(pointer.x, pointer.y);
+    const directionVector = pointerVector.subtract(new Maths.Vector2(xPosition, yPosition));
+    directionVector.normalize();
+
+    const projectile = new Projectile(xPosition, yPosition, 0xf0f0f0, true, this._scene);
+    projectile.launchProjectile(directionVector);
+
+    this._projectiles.push(projectile);
+
+    const launchAngle = Math.atan2(directionVector.y, directionVector.x);
+    const xForce = -Math.cos(launchAngle) * Player.PlayerRecoilForce;
+    const yForce = -Math.sin(launchAngle) * Player.PlayerRecoilForce;
+    this._body.setVelocity(xForce, yForce);
+
+    this._playerRecoilTime = Player.PlayerRecoilControlTime;
+    this._scene.cameras.main.shake(100, 0.01);
+  }
+
+  public getBody() {
+    return this._body;
+  }
+
+  //#endregion
+
+  //#region Utility Functions
+
+  private updatePlayerMovement(deltaTime: number) {
+    if (this._playerRecoilTime > 0) {
+      this._playerRecoilTime -= deltaTime;
+      return;
+    }
+
+    const playerDirection = this._playerController.PlayerDirection;
 
     switch (playerDirection) {
       case PlayerDirection.None:
@@ -101,56 +172,7 @@ class Player {
       case PlayerDirection.Down:
         break;
     }
-
-    if (jumped) {
-      this._body.setVelocityY(Player.JumpVelocity);
-      this._playerCollision.onPlayerJumped();
-    }
-
-    this.updateBetterJump();
-    this.updateProjectiles(deltaTime);
   }
-
-  //#endregion
-
-  //#region External Functions
-
-  public playLandEffect() {
-    const mainScene = this._scene as MainScene;
-
-    const position = this._body.body.position;
-    const xPosition = position.x + this._body.width / 2;
-    const yPosition = position.y + this._body.height;
-
-    mainScene.playParticleEffect(ParticleType.LandDust, 0.1, xPosition, yPosition);
-  }
-
-  public onPlayerGrounded() {
-    this._playerCollision.onGroundCollision();
-  }
-
-  public shoot(pointer: Maths.Vector2) {
-    const position = this._body.body.position;
-    const xPosition = position.x + this._body.width / 2;
-    const yPosition = position.y + this._body.height / 2;
-
-    const pointerVector = new Maths.Vector2(pointer.x, pointer.y);
-    const directionVector = pointerVector.subtract(new Maths.Vector2(xPosition, yPosition));
-    directionVector.normalize();
-
-    const projectile = new Projectile(xPosition, yPosition, 0xf0f0f0, true, this._scene);
-    projectile.launchProjectile(directionVector);
-
-    this._projectiles.push(projectile);
-  }
-
-  public getBody() {
-    return this._body;
-  }
-
-  //#endregion
-
-  //#region Utility Functions
 
   private updateBetterJump() {
     if (this._body.body.velocity.y < 0) {
