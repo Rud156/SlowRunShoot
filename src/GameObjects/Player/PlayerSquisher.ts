@@ -1,4 +1,4 @@
-import { Math } from 'phaser';
+import { Math as Maths } from 'phaser';
 import ExtensionFunctions from '../../Utils/ExtensionFunctions';
 
 class PlayerSquisher {
@@ -7,27 +7,28 @@ class PlayerSquisher {
   private static readonly PlayerMaxXScale = 1.2;
   private static readonly PlayerMinYScale = 0.8;
   private static readonly PlayerMaxYScale = 1.2;
+  private static readonly PlayerShotMinScale = 0.5;
 
   // Scale Change Rate
   private static readonly PlayerJumpScaleChange = 1.5;
   private static readonly PlayerLandScaleChange = 7;
   private static readonly PlayerFallScaleChange = 7;
 
-  private _playerTargetScale: Math.Vector2;
+  private _playerTargetScale: Maths.Vector2;
   private _lerpAmount: number;
 
   private _morphToTarget: boolean;
   private _morphCompleted: boolean;
 
-  private _playerScale: Math.Vector2;
+  private _playerScale: Maths.Vector2;
   private _scaleChangeRate: number;
 
   //#region Construction
 
   constructor() {
     this._morphCompleted = true;
-    this._playerTargetScale = Math.Vector2.ZERO;
-    this._playerScale = Math.Vector2.ONE;
+    this._playerTargetScale = Maths.Vector2.ZERO;
+    this._playerScale = Maths.Vector2.ONE;
   }
 
   //#endregion
@@ -66,7 +67,34 @@ class PlayerSquisher {
 
   //#region External Functions
 
-  public playerShot(rotation: number) {}
+  public playerShotStarted(rotation: number) {
+    const xSquishAmount = ExtensionFunctions.map(
+      Math.abs(Math.cos(rotation)),
+      0,
+      1,
+      1,
+      PlayerSquisher.PlayerShotMinScale
+    );
+    const ySquishAmount = ExtensionFunctions.map(
+      Math.abs(Math.sin(rotation)),
+      0,
+      1,
+      1,
+      PlayerSquisher.PlayerShotMinScale
+    );
+
+    this._playerScale.x = xSquishAmount;
+    this._playerScale.y = ySquishAmount;
+  }
+
+  public playerShotCompleted() {
+    this._morphCompleted = false;
+    this._morphToTarget = false;
+    this._lerpAmount = 0;
+
+    this._playerTargetScale.x = 1;
+    this._playerTargetScale.y = 1;
+  }
 
   public playerJumped() {
     this._playerTargetScale.x = PlayerSquisher.PlayerMinXScale;
@@ -93,8 +121,8 @@ class PlayerSquisher {
     const yScale = ExtensionFunctions.map(currentFallVelocity, 0, maxFallVelocity, 1, PlayerSquisher.PlayerMaxYScale);
 
     if (this._morphCompleted) {
-      this._playerScale.x = Math.Linear(this._playerScale.x, xScale, PlayerSquisher.PlayerFallScaleChange * deltaTime);
-      this._playerScale.y = Math.Linear(this._playerScale.y, yScale, PlayerSquisher.PlayerFallScaleChange * deltaTime);
+      this._playerScale.x = Maths.Linear(this._playerScale.x, xScale, PlayerSquisher.PlayerFallScaleChange * deltaTime);
+      this._playerScale.y = Maths.Linear(this._playerScale.y, yScale, PlayerSquisher.PlayerFallScaleChange * deltaTime);
     }
   }
 
@@ -115,8 +143,8 @@ class PlayerSquisher {
     );
 
     if (this._morphCompleted) {
-      this._playerScale.x = Math.Linear(this._playerScale.x, xScale, PlayerSquisher.PlayerFallScaleChange * deltaTime);
-      this._playerScale.y = Math.Linear(this._playerScale.y, yScale, PlayerSquisher.PlayerFallScaleChange * deltaTime);
+      this._playerScale.x = Maths.Linear(this._playerScale.x, xScale, PlayerSquisher.PlayerFallScaleChange * deltaTime);
+      this._playerScale.y = Maths.Linear(this._playerScale.y, yScale, PlayerSquisher.PlayerFallScaleChange * deltaTime);
     }
   }
 

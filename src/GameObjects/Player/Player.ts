@@ -131,6 +131,7 @@ class Player {
     this._body.setVelocity(xForce, yForce);
 
     this._playerRecoilTime = Player.PlayerRecoilControlTime;
+    this._playerSquisher.playerShotStarted(launchAngle);
     this._scene.cameras.main.shake(100, 0.01);
   }
 
@@ -145,6 +146,10 @@ class Player {
   private updatePlayerMovement(deltaTime: number) {
     if (this._playerRecoilTime > 0) {
       this._playerRecoilTime -= deltaTime;
+
+      if (this._playerRecoilTime <= 0) {
+        this._playerSquisher.playerShotCompleted();
+      }
       return;
     }
 
