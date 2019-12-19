@@ -15,7 +15,7 @@ class Player {
 
   // Movement Data
   private static readonly UnControlledVelocity = 10000;
-  private static readonly MaxMovementSpeed = 230;
+  private static readonly MaxMovementSpeed = 350;
   private static readonly MovementSpeedIncrementRate = 400;
   private static readonly MovementSpeedDecrementRate = 500;
   private static readonly PlayerRecoilVelocity = 300;
