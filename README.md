@@ -1,4 +1,6 @@
-# Project X Team 11
+# Slow Run Shoot
+
+## [Current Gameplay](./Video/SlowRunShoot.mp4)
 
 ## How to run:
 1. Download and install NodeJs from https://nodejs.org/en/
