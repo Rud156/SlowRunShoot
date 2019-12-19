@@ -1,4 +1,4 @@
-import { Scene, Math as Maths, GameObjects } from 'phaser';
+import { Scene, Math as Maths, GameObjects, Geom } from 'phaser';
 
 import GameConstants from '../Utils/GameConstants';
 import Player from '../GameObjects/Player/Player';
@@ -44,7 +44,7 @@ class MainScene extends Scene {
   }
 
   private createPlayer() {
-    this._player = new Player(new Maths.Vector2(400, 300), new Maths.Vector2(50, 50), 0xff0000, this);
+    this._player = new Player(new Maths.Vector2(400, 300), new Maths.Vector2(50, 50), 0x0000ff, this);
     this._player.setupInput(this.input);
   }
 
@@ -59,9 +59,27 @@ class MainScene extends Scene {
   }
 
   private setupColliders() {
-    this.physics.add.collider(this._player.getBody(), this._ground.getBody(), () => {
-      this._player.onPlayerGrounded();
-    });
+    this.physics.add.collider(this._player.getBody(), this._ground.getBody());
+
+    this.physics.add.overlap(
+      this._player.getCollisionCollider(),
+      this._ground.getBody(),
+      () => {
+        this._player.onGroundCollision();
+      },
+      null,
+      this
+    );
+
+    this.physics.add.overlap(
+      this._player.getSelfCollisionCollider(),
+      this._player.getBody(),
+      () => {
+        this._player.onSelfCollision();
+      },
+      null,
+      this
+    );
   }
 
   private setupOtherSceneItems() {

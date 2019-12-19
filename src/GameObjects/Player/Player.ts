@@ -1,6 +1,6 @@
-import { Math as Maths, Geom, Scene, Physics, Input } from 'phaser';
+import { Math as Maths, Scene, Physics, Input } from 'phaser';
 import AssetDatabase from '../../Utils/AssetDatabase';
-import { PlayerController, PlayerDirection } from './PlayerController';
+import { PlayerController } from './PlayerController';
 import PlayerCollision from './PlayerCollision';
 import PlayerSquisher from './PlayerSquisher';
 import Projectile from '../Projectiles/Projectile';
@@ -14,11 +14,15 @@ class Player {
   private static readonly FallMultiplier = 21;
 
   // Movement Data
+  private static readonly UnControlledVelocity = 10000;
   private static readonly MaxMovementSpeed = 230;
   private static readonly MovementSpeedIncrementRate = 400;
   private static readonly MovementSpeedDecrementRate = 500;
-  private static readonly PlayerRecoilForce = 1000;
+  private static readonly PlayerRecoilVelocity = 300;
   private static readonly PlayerRecoilControlTime = 0.3;
+  private static readonly PlayerTimeBetweenShot = 0.3;
+  private static readonly PlayerDashVelocity = 500;
+  private static readonly PlayerDashControlTime = 0.3;
 
   // Projectiles
   private _projectiles: Array<Projectile>;
@@ -32,7 +36,9 @@ class Player {
   private _playerCollision: PlayerCollision;
   private _playerSquisher: PlayerSquisher;
 
-  private _playerRecoilTime: number;
+  private _playerCriticalMovementState: PlayerCriticalMovementState;
+  private _lastShotTime: number;
+  private _playerUnControlTime: number;
 
   //#region Construction
 
@@ -41,7 +47,9 @@ class Player {
     this._scene = scene;
 
     this._projectiles = [];
-    this._playerRecoilTime = 0;
+    this._playerUnControlTime = 0;
+    this._playerCriticalMovementState = PlayerCriticalMovementState.None;
+    this._lastShotTime = 0;
 
     this.createPlayerBody(scene, position, size);
   }
@@ -60,7 +68,7 @@ class Player {
     this._body.setDisplaySize(size.x, size.y);
     this._body.setTint(this._color);
 
-    this._playerCollision = new PlayerCollision(this);
+    this._playerCollision = new PlayerCollision(this, scene);
     this._playerSquisher = new PlayerSquisher();
     this._playerCollision.setPlayerSquisher(this._playerSquisher);
   }
@@ -71,7 +79,6 @@ class Player {
 
   public update(deltaTime: number) {
     this._playerController.update();
-    const jumped = this._playerController.PlayerJumped;
 
     this._playerSquisher.update(deltaTime);
     const playerScale = this._playerSquisher.PlayerScale;
@@ -83,13 +90,25 @@ class Player {
       this._playerSquisher.playerMoving(Math.abs(this._body.body.velocity.x), Player.MaxMovementSpeed, deltaTime);
     }
 
+    const jumped = this._playerController.PlayerJumped;
     if (jumped) {
       this._body.setVelocityY(Player.JumpVelocity);
       this._playerCollision.onPlayerJumped();
     }
 
+    const bottomPosition = this._body.getBottomCenter();
+    this._playerCollision.setColliderPosition(bottomPosition.x, bottomPosition.y);
+    const centerPosition = this._body.getCenter();
+    this._playerCollision.setSelfColliderPosition(centerPosition.x, centerPosition.y);
+
+    this.checkAndActivatePlayerDash();
+    this.updatePlayerShooting(deltaTime);
+
+    this.updatePlayerUnControlTime(deltaTime);
+
     this.updatePlayerMovement(deltaTime);
     this.updateBetterJump();
+
     this.updateProjectiles(deltaTime);
   }
 
@@ -100,39 +119,53 @@ class Player {
   public playLandEffect() {
     const mainScene = this._scene as MainScene;
 
-    const position = this._body.body.position;
-    const xPosition = position.x + this._body.displayWidth / 2;
-    const yPosition = position.y + this._body.displayHeight;
-
-    mainScene.playParticleEffect(ParticleType.LandDust, 0.1, xPosition, yPosition);
-  }
-
-  public onPlayerGrounded() {
-    this._playerCollision.onGroundCollision();
+    const position = this._body.getBottomCenter();
+    mainScene.playParticleEffect(ParticleType.LandDust, 0.1, position.x, position.y);
   }
 
   public shoot(pointer: Maths.Vector2) {
-    const position = this._body.body.position;
-    const xPosition = position.x + this._body.displayWidth / 2;
-    const yPosition = position.y + this._body.displayHeight / 2;
+    if (this._lastShotTime > 0) {
+      return;
+    }
 
+    const position = this._body.getCenter();
     const pointerVector = new Maths.Vector2(pointer.x, pointer.y);
-    const directionVector = pointerVector.subtract(new Maths.Vector2(xPosition, yPosition));
+    const directionVector = pointerVector.subtract(new Maths.Vector2(position.x, position.y));
     directionVector.normalize();
 
-    const projectile = new Projectile(xPosition, yPosition, 0xf0f0f0, true, this._scene);
+    const projectile = new Projectile(position.x, position.y, 0xf0f0f0, true, this._scene);
     projectile.launchProjectile(directionVector);
 
     this._projectiles.push(projectile);
+    this._lastShotTime = Player.PlayerTimeBetweenShot;
+
+    this._playerCriticalMovementState = PlayerCriticalMovementState.Shoot;
 
     const launchAngle = Math.atan2(directionVector.y, directionVector.x);
-    const xForce = -Math.cos(launchAngle) * Player.PlayerRecoilForce;
-    const yForce = -Math.sin(launchAngle) * Player.PlayerRecoilForce;
-    this._body.setVelocity(xForce, yForce);
+    const xVelocity = -Math.cos(launchAngle) * Player.PlayerRecoilVelocity;
+    const yVelocity = -Math.sin(launchAngle) * Player.PlayerRecoilVelocity;
+    this._body.setVelocity(xVelocity, yVelocity);
 
-    this._playerRecoilTime = Player.PlayerRecoilControlTime;
-    this._playerSquisher.playerShotStarted(launchAngle);
+    this._playerUnControlTime = Player.PlayerRecoilControlTime;
+    this._body.setMaxVelocity(Player.UnControlledVelocity, Player.UnControlledVelocity);
+    this._playerSquisher.playerForceSquish(Math.cos(launchAngle), Math.sin(launchAngle));
     this._scene.cameras.main.shake(100, 0.01);
+  }
+
+  public onGroundCollision() {
+    this._playerCollision.onGroundCollision();
+  }
+
+  public onSelfCollision() {
+    this._playerCollision.onPlayerSelfCollisionUpdate();
+  }
+
+  public getCollisionCollider() {
+    return this._playerCollision.getCollider();
+  }
+
+  public getSelfCollisionCollider() {
+    return this._playerCollision.getSelfCollider();
   }
 
   public getBody() {
@@ -143,40 +176,65 @@ class Player {
 
   //#region Utility Functions
 
-  private updatePlayerMovement(deltaTime: number) {
-    if (this._playerRecoilTime > 0) {
-      this._playerRecoilTime -= deltaTime;
+  private updatePlayerUnControlTime(deltaTime: number) {
+    if (this._playerUnControlTime > 0) {
+      this._playerUnControlTime -= deltaTime;
 
-      if (this._playerRecoilTime <= 0) {
-        this._playerSquisher.playerShotCompleted();
+      if (this._playerUnControlTime <= 0) {
+        if (this._playerCriticalMovementState !== PlayerCriticalMovementState.None) {
+          this._playerSquisher.playerForceSquishComplete();
+        }
+
+        this._body.setMaxVelocity(Player.MaxMovementSpeed, Player.MaxFallVelocity);
+        this._playerCriticalMovementState = PlayerCriticalMovementState.None;
       }
+    }
+  }
+
+  private updatePlayerMovement(deltaTime: number) {
+    if (this._playerCriticalMovementState !== PlayerCriticalMovementState.None) {
       return;
     }
 
     const playerDirection = this._playerController.PlayerDirection;
 
-    switch (playerDirection) {
-      case PlayerDirection.None:
-        {
-          this._body.setAccelerationX(0);
-        }
+    switch (playerDirection.xValue) {
+      case 0:
+        this._body.setAccelerationX(0);
         break;
 
-      case PlayerDirection.Left:
-        {
-          this._body.setAccelerationX(-Player.MovementSpeedIncrementRate);
-        }
+      case -1:
+        this._body.setAccelerationX(-Player.MovementSpeedIncrementRate);
         break;
 
-      case PlayerDirection.Right:
-        {
-          this._body.setAccelerationX(Player.MovementSpeedIncrementRate);
-        }
-        break;
-
-      case PlayerDirection.Down:
+      case 1:
+        this._body.setAccelerationX(Player.MovementSpeedIncrementRate);
         break;
     }
+  }
+
+  private updatePlayerShooting(deltaTime: number) {
+    if (this._lastShotTime > 0) {
+      this._lastShotTime -= deltaTime;
+    }
+  }
+
+  private checkAndActivatePlayerDash() {
+    if (
+      this._playerCriticalMovementState !== PlayerCriticalMovementState.None ||
+      !this._playerController.PlayerDashed
+    ) {
+      return;
+    }
+
+    const playerDirection = this._playerController.PlayerDirection;
+    const xVelocity = playerDirection.xValue * Player.PlayerDashVelocity;
+    const yVelocity = playerDirection.yValue * Player.PlayerDashVelocity;
+    this._body.setMaxVelocity(Player.UnControlledVelocity, Player.UnControlledVelocity);
+    this._body.setVelocity(xVelocity, yVelocity);
+
+    this._playerUnControlTime = Player.PlayerDashControlTime;
+    this._scene.cameras.main.shake(100, 0.01);
   }
 
   private updateBetterJump() {
@@ -199,6 +257,12 @@ class Player {
   }
 
   //#endregion
+}
+
+enum PlayerCriticalMovementState {
+  Dash,
+  Shoot,
+  None,
 }
 
 export default Player;

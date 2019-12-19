@@ -67,27 +67,15 @@ class PlayerSquisher {
 
   //#region External Functions
 
-  public playerShotStarted(rotation: number) {
-    const xSquishAmount = ExtensionFunctions.map(
-      Math.abs(Math.cos(rotation)),
-      0,
-      1,
-      1,
-      PlayerSquisher.PlayerShotMinScale
-    );
-    const ySquishAmount = ExtensionFunctions.map(
-      Math.abs(Math.sin(rotation)),
-      0,
-      1,
-      1,
-      PlayerSquisher.PlayerShotMinScale
-    );
+  public playerForceSquish(xValue: number, yValue: number) {
+    const xSquishAmount = ExtensionFunctions.map(Math.abs(xValue), 0, 1, 1, PlayerSquisher.PlayerShotMinScale);
+    const ySquishAmount = ExtensionFunctions.map(Math.abs(yValue), 0, 1, 1, PlayerSquisher.PlayerShotMinScale);
 
     this._playerScale.x = xSquishAmount;
     this._playerScale.y = ySquishAmount;
   }
 
-  public playerShotCompleted() {
+  public playerForceSquishComplete() {
     this._morphCompleted = false;
     this._morphToTarget = false;
     this._lerpAmount = 0;
